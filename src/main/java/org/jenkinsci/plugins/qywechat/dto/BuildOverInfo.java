@@ -1,5 +1,12 @@
 package org.jenkinsci.plugins.qywechat.dto;
 
+import hudson.console.ModelHyperlinkNote;
+import hudson.model.Cause;
+import hudson.model.Messages;
+import hudson.model.User;
+import hudson.security.ACL;
+import jenkins.model.Jenkins;
+import org.acegisecurity.Authentication;
 import org.jenkinsci.plugins.qywechat.NotificationUtil;
 import org.jenkinsci.plugins.qywechat.model.NotificationConfig;
 import hudson.model.Result;
@@ -9,6 +16,7 @@ import org.apache.commons.lang.StringUtils;
 
 import java.util.HashMap;
 import java.util.Map;
+import java.util.stream.Collectors;
 
 /**
  * 结束构建的通知信息
@@ -41,6 +49,8 @@ public class BuildOverInfo {
      */
     private Result result;
 
+    String executorName;
+
     public BuildOverInfo(String projectName, Run<?, ?> run, NotificationConfig config){
         //使用时间
         this.useTimeString = run.getTimestampString();
@@ -68,6 +78,18 @@ public class BuildOverInfo {
         }
         //结果
         result = run.getResult();
+
+        Cause.UserIdCause userIdCause = run.getCause(Cause.UserIdCause.class);
+        // 执行人信息
+        User user = null;
+        if (userIdCause != null && userIdCause.getUserId() != null) {
+            user = User.getById(userIdCause.getUserId(), false);
+        }
+        if (user == null) {
+            executorName = run.getCauses().stream().map(Cause::getShortDescription).collect(Collectors.joining());
+        } else {
+            executorName = user.getDisplayName();
+        }
     }
 
     public String toJSONString(){
@@ -76,12 +98,13 @@ public class BuildOverInfo {
         if(StringUtils.isNotEmpty(topicName)){
             content.append(this.topicName);
         }
+
         content.append("<font color=\"info\">【" + this.projectName + "】</font>构建" + getStatus() + "\n");
         content.append(" >构建用时：<font color=\"comment\">" +  this.useTimeString + "</font>\n");
+        content.append(" >构建人：<font color=\"comment\">" +  executorName + "</font>\n");
         if(StringUtils.isNotEmpty(this.consoleUrl)) {
             content.append(" >[查看控制台](" + this.consoleUrl + ")");
         }
-
         Map markdown = new HashMap<String, Object>();
         markdown.put("content", content.toString());
 

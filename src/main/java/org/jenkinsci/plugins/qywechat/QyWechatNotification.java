@@ -34,6 +34,8 @@ public class QyWechatNotification extends Publisher implements SimpleBuildStep {
 
     private boolean failNotify;
 
+    private boolean startNotify;
+
     private String projectName;
 
     @Extension
@@ -63,6 +65,10 @@ public class QyWechatNotification extends Publisher implements SimpleBuildStep {
             return true;
         }
         this.projectName = build.getProject().getFullDisplayName();
+        //是否发送开始构建信息
+        if (!config.startNotify) {
+            return true;
+        }
         BuildBeginInfo buildInfo = new BuildBeginInfo(this.projectName, build, config);
 
         String req = buildInfo.toJSONString();
@@ -174,6 +180,7 @@ public class QyWechatNotification extends Publisher implements SimpleBuildStep {
             config.mentionedMobile = mentionedMobile;
         }
         config.failNotify = failNotify;
+        config.startNotify = startNotify;
         //使用环境变量
         if(config.webhookUrl.contains("$")){
             String val = NotificationUtil.replaceMultipleEnvValue(config.webhookUrl, envVars);
@@ -211,6 +218,10 @@ public class QyWechatNotification extends Publisher implements SimpleBuildStep {
     public void setFailNotify(boolean failNotify) {
         this.failNotify = failNotify;
     }
+    @DataBoundSetter
+    public void setStartNotify(boolean startNotify) {
+        this.startNotify = startNotify;
+    }
 
     public String getWebhookUrl() {
         return webhookUrl;
@@ -226,6 +237,10 @@ public class QyWechatNotification extends Publisher implements SimpleBuildStep {
 
     public boolean isFailNotify() {
         return failNotify;
+    }
+
+    public boolean isStartNotify() {
+        return startNotify;
     }
 }
 

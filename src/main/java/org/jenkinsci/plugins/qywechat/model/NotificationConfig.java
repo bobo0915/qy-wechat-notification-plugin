@@ -51,4 +51,8 @@ public class NotificationConfig {
      */
     public boolean failNotify = false;
 
+    /**
+     * 发送开始构建信息
+     */
+    public boolean startNotify = false;
 }
